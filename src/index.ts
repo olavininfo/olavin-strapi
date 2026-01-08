@@ -1,43 +1,44 @@
 import { Core } from '@strapi/strapi';
 
 export default {
-  register({ strapi }: { strapi: Core.Strapi }) {
+  register({ strapi }: { strapi: any }) {
     // 1. 注册 Document Service 全局中间件
-    strapi.documents.use((context) => {
-      // 仅拦截 Blog Post 的查询操作
+    // 修正：必须是 async 函数，且必须调用 await next()
+    strapi.documents.use(async (context, next) => {
+      // 修正：Strapi v5 的查询动作名称为 findMany 和 findOne
       if (
         context.uid === 'api::blog-post.blog-post' &&
-        (context.action === 'find' || context.action === 'findOne')
+        (context.action === 'findMany' || context.action === 'findOne')
       ) {
-        // 从 Strapi 全局请求上下文中获取 Header
+        // 获取全局请求上下文
+        // @ts-ignore
         const requestContext = strapi.requestContext.get();
         const appHeader = requestContext?.headers?.['x-olavin-app'] || 'public';
 
-        // 强行转换 params 类型以避免 TS 报属性不存在的错误
-        const params = context.params as any;
-
         if (appHeader === 'public') {
-          // 【官网模式】：仅限 public 渠道 + 已发布 + 时间到期
-          params.filters = {
-            ...(params.filters || {}),
+          // 【官网模式】：仅限已发布的 public 渠道且时间已到
+          context.params.filters = {
+            ...(context.params.filters || {}),
             publishing_channels: { slug: { $eq: 'public' } },
             public_release_at: { $lte: new Date().toISOString() },
           };
-          params.status = 'published';
+          context.params.status = 'published';
         } else if (appHeader === 'member') {
           // 【私域模式】：仅限 member 渠道
-          params.filters = {
-            ...(params.filters || {}),
+          context.params.filters = {
+            ...(context.params.filters || {}),
             publishing_channels: { slug: { $eq: 'member' } },
           };
         }
       }
+      
+      // 必须返回并等待下一个中间件
+      return await next();
     });
   },
 
-  async bootstrap({ strapi }: { strapi: Core.Strapi }) {
-    // 2. 自动初始化维度数据 (Seeding)
-    // 使用 Record<string, any> 绕过尚未生成的 UID 类型检查
+  async bootstrap({ strapi }: { strapi: any }) {
+    // 维度数据自动初始化逻辑（保持不变）
     const seedData: Record<string, Array<{ name: string; slug: string }>> = {
       'api::publishing-channel.publishing-channel': [
         { name: 'Public (Website/SEO)', slug: 'public' },
@@ -69,17 +70,22 @@ export default {
     for (const uid of Object.keys(seedData)) {
       const records = seedData[uid];
       for (const record of records) {
-        // 使用 strapi.documents(uid as any) 解决 UID 字符串报错问题
-        const existing = await strapi.documents(uid as any).findFirst({
-          filters: { slug: record.slug },
-        });
-
-        if (!existing) {
-          await strapi.documents(uid as any).create({
-            data: record,
-            status: 'published',
+        try {
+          // @ts-ignore
+          const existing = await strapi.documents(uid as any).findFirst({
+            filters: { slug: record.slug },
           });
-          strapi.log.info(`🌱 Seeding: Created ${uid} -> ${record.slug}`);
+
+          if (!existing) {
+            // @ts-ignore
+            await strapi.documents(uid as any).create({
+              data: record,
+              status: 'published',
+            });
+            strapi.log.info(`🌱 Seeding: Created ${uid} -> ${record.slug}`);
+          }
+        } catch (error) {
+          strapi.log.error(`❌ Seeding Error for ${uid}: ${error.message}`);
         }
       }
     }
