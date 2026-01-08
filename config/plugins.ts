@@ -15,10 +15,9 @@ export default ({ env }) => ({
             Bucket: env('S3_BUCKET'),
           },
         },
+        // 修正：确保 baseUrl 在 providerOptions 根级
+        baseUrl: 'https://media.olavin.com', 
       },
-      // 核心修正：强制 Strapi 使用您的自定义域名输出 URL
-      // 注意：必须包含完整的 https://
-      baseUrl: 'https://media.olavin.com', 
       actionOptions: {
         upload: {},
         uploadStream: {},
