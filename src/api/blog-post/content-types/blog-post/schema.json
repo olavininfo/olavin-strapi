@@ -1,0 +1,62 @@
+{
+  "kind": "collectionType",
+  "collectionName": "blog_posts",
+  "info": {
+    "singularName": "blog-post",
+    "pluralName": "blog-posts",
+    "displayName": "Blog Post"
+  },
+  "options": { "draftAndPublish": true },
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "slug": { "type": "uid", "targetField": "title", "unique": true },
+    "content": { "type": "blocks", "required": true },
+    "author_display_name": { "type": "string", "default": "Olavin Team" },
+    "blog_type": {
+      "type": "enumeration",
+      "enum": ["industry_insights", "knowledge_engineering", "solutions_selection", "product_updates"],
+      "required": true
+    },
+    "audience_roles": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::audience-role.audience-role"
+    },
+    "problem_scenarios": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::problem-scenario.problem-scenario"
+    },
+    "product_families": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::product-family.product-family"
+    },
+    "publishing_channels": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::publishing-channel.publishing-channel"
+    },
+    "public_release_at": { "type": "datetime" },
+    "email_snippet": { "type": "text", "required": true },
+    "key_takeaways": {
+      "type": "component",
+      "repeatable": true,
+      "component": "blog.key-takeaway",
+      "min": 2,
+      "max": 5,
+      "required": true
+    },
+    "cta": {
+      "type": "component",
+      "repeatable": false,
+      "component": "blog.primary-cta",
+      "required": true
+    },
+    "seo_metadata": {
+      "type": "component",
+      "repeatable": false,
+      "component": "shared.seo-metadata"
+    }
+  }
+}

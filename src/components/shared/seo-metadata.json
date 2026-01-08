@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_shared_seo_metadata",
+  "info": {
+    "displayName": "SEO Metadata",
+    "icon": "search"
+  },
+  "attributes": {
+    "meta_title": { "type": "string" },
+    "meta_description": { "type": "text" },
+    "canonical_url": { "type": "string" },
+    "noindex": { "type": "boolean", "default": false }
+  }
+}

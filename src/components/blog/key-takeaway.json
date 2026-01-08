@@ -1,0 +1,10 @@
+{
+  "collectionName": "components_blog_key_takeaways",
+  "info": {
+    "displayName": "Key Takeaway",
+    "icon": "bulletList"
+  },
+  "attributes": {
+    "content": { "type": "text", "required": true }
+  }
+}

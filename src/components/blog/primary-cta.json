@@ -1,0 +1,15 @@
+{
+  "collectionName": "components_blog_primary_ctas",
+  "info": {
+    "displayName": "Primary CTA",
+    "icon": "cursor"
+  },
+  "attributes": {
+    "label": {
+      "type": "enumeration",
+      "enum": ["Read More", "Contact Us", "View Product", "Get a Quote", "Download PDF"],
+      "required": true
+    },
+    "target_url": { "type": "string", "required": true }
+  }
+}
