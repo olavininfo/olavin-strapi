@@ -16,6 +16,9 @@ export default ({ env }) => ({
           },
         },
       },
+      // 核心修正：强制 Strapi 使用您的自定义域名输出 URL
+      // 注意：必须包含完整的 https://
+      baseUrl: 'https://media.olavin.com', 
       actionOptions: {
         upload: {},
         uploadStream: {},
