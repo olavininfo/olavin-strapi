@@ -27,7 +27,7 @@ export default ({ env }) => ({
     },
   },
 
-  // 修正：此处 Key 必须与安装的包名 strapi-plugin-strapi-algolia 匹配
+  // 2. 修正后的 Algolia 配置（注入绝对防御逻辑）
   'strapi-algolia': {
     enabled: true,
     config: {
@@ -37,29 +37,18 @@ export default ({ env }) => ({
         {
           name: 'api::blog-post.blog-post',
           id: 'documentId',
-          // 增强版防御性索引判定逻辑
+          // 绝对防御：确保无论数据如何，都必须返回合法的索引字符串
           index: (item: any) => {
-            const defaultIndex = 'blog_post_member';
-            try {
-              // 在 v5 的某些生命周期中，publishing_channels 可能不存在或结构不同
-              const channels = item.publishing_channels;
-              
-              if (Array.isArray(channels)) {
-                const isPublic = channels.some(c => 
-                  (typeof c === 'object' && c.slug === 'public') || c === 'public'
-                );
-                return isPublic ? 'blog_post_public' : defaultIndex;
-              }
-              
-              return defaultIndex;
-            } catch (e) {
-              return defaultIndex;
-            }
+            const channels = item?.publishing_channels;
+            const hasPublic = Array.isArray(channels) && channels.some(c => 
+              (c && typeof c === 'object' && c.slug === 'public') || c === 'public'
+            );
+            return hasPublic ? 'blog_post_public' : 'blog_post_member';
           },
           filters: {
             status: 'published'
           },
-          // v5 标准对象 populate 格式
+          // v5 嵌套 populate 语法
           populate: {
             publishing_channels: {
               fields: ['slug']
