@@ -37,19 +37,33 @@ export default ({ env }) => ({
         {
           name: 'api::blog-post.blog-post',
           id: 'documentId',
-          // 逻辑注入：根据发布渠道动态决定推送到哪个索引
-          index: (item) => {
-            const channels = item.publishing_channels || [];
-            const hasPublic = channels.some((c: any) => c.slug === 'public');
-            return hasPublic ? 'blog_post_public' : 'blog_post_member';
+          // 增强版防御性索引判定逻辑
+          index: (item: any) => {
+            const defaultIndex = 'blog_post_member';
+            try {
+              // 在 v5 的某些生命周期中，publishing_channels 可能不存在或结构不同
+              const channels = item.publishing_channels;
+              
+              if (Array.isArray(channels)) {
+                const isPublic = channels.some(c => 
+                  (typeof c === 'object' && c.slug === 'public') || c === 'public'
+                );
+                return isPublic ? 'blog_post_public' : defaultIndex;
+              }
+              
+              return defaultIndex;
+            } catch (e) {
+              return defaultIndex;
+            }
           },
-          // 只同步已发布的文章
           filters: {
             status: 'published'
           },
-          // 修正点：将数组改为对象格式，以符合 Strapi v5 类型要求
+          // v5 标准对象 populate 格式
           populate: {
-            publishing_channels: true
+            publishing_channels: {
+              fields: ['slug']
+            }
           },
         },
       ],
