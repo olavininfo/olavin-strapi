@@ -40,15 +40,17 @@ export default ({ env }) => ({
           // 逻辑注入：根据发布渠道动态决定推送到哪个索引
           index: (item) => {
             const channels = item.publishing_channels || [];
-            // 查找 slug 为 public 的记录（注意：v5 传给插件的对象通常包含关联关系数据）
-            const hasPublic = channels.some(c => c.slug === 'public');
+            const hasPublic = channels.some((c: any) => c.slug === 'public');
             return hasPublic ? 'blog_post_public' : 'blog_post_member';
           },
           // 只同步已发布的文章
           filters: {
             status: 'published'
           },
-          populate: ['publishing_channels'],
+          // 修正点：将数组改为对象格式，以符合 Strapi v5 类型要求
+          populate: {
+            publishing_channels: true
+          },
         },
       ],
     },
