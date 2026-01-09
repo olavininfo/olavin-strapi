@@ -9,6 +9,9 @@ WORKDIR /opt/
 # 先复制 package 文件
 COPY package.json package-lock.json ./
 
+# 增加下面这一行，用于打破构建缓存
+RUN echo "build_id_$(date +%s)" > /build_id.txt
+
 # 将 npm ci 改为 npm install，以解决 Windows 到 Linux 的锁文件兼容性问题
 RUN npm install
 
