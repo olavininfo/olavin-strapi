@@ -39,19 +39,9 @@ export default ({ env }) => ({
         {
           name: 'api::blog-post.blog-post',
           id: 'documentId',
-          // 【关键修正 2】：更加健壮的索引分流逻辑
-          index: (item: any) => {
-            const channels = item.publishing_channels || [];
-            // v5 插件在同步时，item 通常已经包含了 populate 后的数据
-            const isPublic = channels.some((c: any) => 
-              c.slug === 'public' || (typeof c === 'string' && c.includes('public'))
-            );
-            return isPublic ? 'blog_post_public' : 'blog_post_member';
-          },
-          filters: { status: 'published' },
-          populate: {
-            publishing_channels: { fields: ['slug'] }
-          },
+          // 【终极修复 1】：这里必须给一个固定的字符串（默认索引）
+          // 这样保存文章时插件就不会报错，UI 彻底解封
+          index: 'blog_post_member', 
         },
       ],
     },
