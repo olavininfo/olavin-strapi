@@ -2,12 +2,10 @@ import { Core } from '@strapi/strapi';
 
 export default {
   register({ strapi }: { strapi: any }) {
-    // API 门禁逻辑（保持不变，已验证通过）
+    // 【保留】API 门禁逻辑：这是稳定且必需的
     strapi.documents.use(async (context, next) => {
       const requestContext = strapi.requestContext.get();
-      if (!requestContext || !requestContext.url.startsWith('/api/')) {
-        return await next();
-      }
+      if (!requestContext || !requestContext.url.startsWith('/api/')) return await next();
       if (context.uid === 'api::blog-post.blog-post' && (context.action === 'findMany' || context.action === 'findOne')) {
         const appHeader = requestContext.headers?.['x-olavin-app'] || 'public';
         const params = context.params as any;
@@ -23,51 +21,9 @@ export default {
   },
 
   async bootstrap({ strapi }: { strapi: any }) {
-    // 【终极修复 2】：利用生命周期手动“修正”索引分流
-    strapi.db.lifecycles.subscribe({
-      models: ['api::blog-post.blog-post'],
-      async afterUpdate(event) {
-        const { result } = event;
-        
-        // 关键补丁：增加延迟并改用 db.query，避开 v5 Document Service 的 Transaction 锁定冲突
-        setTimeout(async () => {
-          try {
-            // 使用 db.query 绕过文档服务层，确保在事务完成后能安全读取
-            const entry = await strapi.db.query('api::blog-post.blog-post').findOne({
-              where: { documentId: result.documentId },
-              populate: ['publishing_channels']
-            });
+    // 【已移除】原本在这里的 Algolia 手动同步逻辑（生命周期钩子）
 
-            if (entry && entry.publishedAt) {
-              const algoliaService = strapi.plugin('strapi-algolia').service('algolia');
-              const channels = entry.publishing_channels || [];
-              const isPublic = channels.some((c: any) => c.slug === 'public');
-              const isMember = channels.some((c: any) => c.slug === 'member');
-              
-              // 逻辑 A：处理 Public 索引 (支持 Hybrid)
-              if (isPublic) {
-                await algoliaService.saveObject(entry, 'blog_post_public');
-              } else {
-                await algoliaService.deleteObject(entry.documentId, 'blog_post_public');
-              }
-
-              // 逻辑 B：处理 Member 索引 (支持 Hybrid)
-              if (isMember) {
-                await algoliaService.saveObject(entry, 'blog_post_member');
-              } else {
-                await algoliaService.deleteObject(entry.documentId, 'blog_post_member');
-              }
-
-              strapi.log.info(`🚀 Algolia 同步成功: "${entry.title}" (Public: ${isPublic}, Member: ${isMember})`);
-            }
-          } catch (err) {
-            strapi.log.error(`❌ Algolia 分流失败: ${err.message}`);
-          }
-        }, 1500);
-      },
-    });
-
-    // Seeding 逻辑保持不变...
+    // 【保留】Seeding 逻辑：确保基础维度数据存在
     const seedData: Record<string, any[]> = {
       'api::publishing-channel.publishing-channel': [
         { name: 'Public (Website/SEO)', slug: 'public' },

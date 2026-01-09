@@ -26,22 +26,4 @@ export default ({ env }) => ({
       },
     },
   },
-
-  // 2. 修正后的 Algolia 配置（注入绝对防御逻辑）
-  'strapi-algolia': {
-    enabled: true,
-    config: {
-      apiKey: env('ALGOLIA_ADMIN_KEY'),
-      applicationId: env('ALGOLIA_APP_ID'),
-      indexPrefix: '', 
-      contentTypes: [
-        {
-          name: 'api::blog-post.blog-post',
-          id: 'documentId',
-          // 设为占位符，禁用插件自带的不稳定分发逻辑
-          index: 'sync_by_lifecycle', 
-        },
-      ],
-    },
-  },
 });
