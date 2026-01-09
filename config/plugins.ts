@@ -27,8 +27,8 @@ export default ({ env }) => ({
     },
   },
 
-  // 2. 搜索同步配置（合并步骤 6.2 + 6.3）
-  algolia: {
+  // 修正：此处 Key 必须与安装的包名 strapi-plugin-strapi-algolia 匹配
+  'strapi-algolia': {
     enabled: true,
     config: {
       apiKey: env('ALGOLIA_ADMIN_KEY'),
@@ -48,8 +48,7 @@ export default ({ env }) => ({
           filters: {
             status: 'published'
           },
-          // 转换数据，只把需要搜索的字段传给 Algolia
-          populate: ['publishing_channels'], // 必须获取关联数据用于判定路径
+          populate: ['publishing_channels'],
         },
       ],
     },
