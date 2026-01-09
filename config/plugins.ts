@@ -33,12 +33,25 @@ export default ({ env }) => ({
     config: {
       apiKey: env('ALGOLIA_ADMIN_KEY'),
       applicationId: env('ALGOLIA_APP_ID'),
+      // 【关键修正 1】：禁止插件自动添加 production_ 前缀
+      indexPrefix: '', 
       contentTypes: [
         {
           name: 'api::blog-post.blog-post',
-          // 【核心修正 1】：将其设为 false，禁止插件自动拦截保存动作
-          // 这样就不会再弹出那个讨厌的红色错误框了
-          index: 'blog_post_member', 
+          id: 'documentId',
+          // 【关键修正 2】：更加健壮的索引分流逻辑
+          index: (item: any) => {
+            const channels = item.publishing_channels || [];
+            // v5 插件在同步时，item 通常已经包含了 populate 后的数据
+            const isPublic = channels.some((c: any) => 
+              c.slug === 'public' || (typeof c === 'string' && c.includes('public'))
+            );
+            return isPublic ? 'blog_post_public' : 'blog_post_member';
+          },
+          filters: { status: 'published' },
+          populate: {
+            publishing_channels: { fields: ['slug'] }
+          },
         },
       ],
     },
