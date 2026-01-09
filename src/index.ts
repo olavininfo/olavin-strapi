@@ -29,35 +29,41 @@ export default {
       async afterUpdate(event) {
         const { result } = event;
         
-        // 关键补丁：延迟 1 秒执行，避开 Transaction 锁定并确保数据已持久化
+        // 关键补丁：增加延迟并改用 db.query，避开 v5 Document Service 的 Transaction 锁定冲突
         setTimeout(async () => {
           try {
-            const entry = await strapi.documents('api::blog-post.blog-post').findOne({
-              documentId: result.documentId,
+            // 使用 db.query 绕过文档服务层，确保在事务完成后能安全读取
+            const entry = await strapi.db.query('api::blog-post.blog-post').findOne({
+              where: { documentId: result.documentId },
               populate: ['publishing_channels']
             });
 
-            if (entry && entry.status === 'published') {
+            if (entry && entry.publishedAt) {
               const algoliaService = strapi.plugin('strapi-algolia').service('algolia');
-              const isPublic = entry.publishing_channels?.some((c: any) => c.slug === 'public');
+              const channels = entry.publishing_channels || [];
+              const isPublic = channels.some((c: any) => c.slug === 'public');
+              const isMember = channels.some((c: any) => c.slug === 'member');
               
+              // 逻辑 A：处理 Public 索引 (支持 Hybrid)
               if (isPublic) {
-                // 如果包含 public 渠道，手动推送到 public 索引
                 await algoliaService.saveObject(entry, 'blog_post_public');
-                // 同时从 member 索引中移除（防止重复）
-                await algoliaService.deleteObject(entry.documentId, 'blog_post_member');
-                strapi.log.info(`🚀 Algolia 分流: "${entry.title}" 已同步至 Public 索引并从 Member 移除`);
               } else {
-                // 如果仅限私域，则确保它留在 member 索引
-                await algoliaService.saveObject(entry, 'blog_post_member');
                 await algoliaService.deleteObject(entry.documentId, 'blog_post_public');
-                strapi.log.info(`🔒 Algolia 分流: "${entry.title}" 已锁定在 Member 索引`);
               }
+
+              // 逻辑 B：处理 Member 索引 (支持 Hybrid)
+              if (isMember) {
+                await algoliaService.saveObject(entry, 'blog_post_member');
+              } else {
+                await algoliaService.deleteObject(entry.documentId, 'blog_post_member');
+              }
+
+              strapi.log.info(`🚀 Algolia 同步成功: "${entry.title}" (Public: ${isPublic}, Member: ${isMember})`);
             }
           } catch (err) {
             strapi.log.error(`❌ Algolia 分流失败: ${err.message}`);
           }
-        }, 1000);
+        }, 1500);
       },
     });
 
