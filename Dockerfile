@@ -1,25 +1,25 @@
 # 使用 Node.js 20 提高与 Strapi v5 的兼容性
 FROM node:20-alpine
 
-# 安装构建依赖（增加了 python3 和 make，这是 Strapi v5 某些原生模块必需的）
+# 安装构建依赖
 RUN apk update && apk add --no-cache build-base gcc autoconf automake libtool vips-dev zlib-dev libpng-dev python3 make
 
-WORKDIR /opt/
+# 设置统一的工作目录
+WORKDIR /opt/app
 
-# 先复制 package 文件
+# 先复制 package 文件并强制安装
 COPY package.json package-lock.json ./
+# 增加 --prefer-offline 确保优先使用缓存，增加 --no-audit 减少报错
+RUN npm install --prefer-offline --no-audit
 
-# 增加下面这一行，用于打破构建缓存
-RUN echo "build_id_$(date +%s)" > /build_id.txt
-
-# 将 npm ci 改为 npm install，以解决 Windows 到 Linux 的锁文件兼容性问题
-RUN npm install
-
-# 复制其余文件
+# 复制其余项目文件
 COPY . .
 
-# 构建项目
+# 确保在容器内也能找到 node_modules
+ENV NODE_PATH=/opt/app/node_modules
 ENV NODE_ENV=production
+
+# 构建项目
 RUN npm run build
 
 EXPOSE 1337
