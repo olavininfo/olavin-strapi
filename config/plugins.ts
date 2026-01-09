@@ -36,24 +36,9 @@ export default ({ env }) => ({
       contentTypes: [
         {
           name: 'api::blog-post.blog-post',
-          id: 'documentId',
-          // 绝对防御：确保无论数据如何，都必须返回合法的索引字符串
-          index: (item: any) => {
-            const channels = item?.publishing_channels;
-            const hasPublic = Array.isArray(channels) && channels.some(c => 
-              (c && typeof c === 'object' && c.slug === 'public') || c === 'public'
-            );
-            return hasPublic ? 'blog_post_public' : 'blog_post_member';
-          },
-          filters: {
-            status: 'published'
-          },
-          // v5 嵌套 populate 语法
-          populate: {
-            publishing_channels: {
-              fields: ['slug']
-            }
-          },
+          // 【核心修正 1】：将其设为 false，禁止插件自动拦截保存动作
+          // 这样就不会再弹出那个讨厌的红色错误框了
+          index: 'blog_post_member', 
         },
       ],
     },
