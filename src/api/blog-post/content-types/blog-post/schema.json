@@ -10,7 +10,7 @@
   "attributes": {
     "title": { "type": "string", "required": true },
     "slug": { "type": "uid", "targetField": "title", "unique": true },
-    "content": { "type": "blocks", "required": true },
+    "content": { "type": "blocks", "required": false },
     "author_display_name": { "type": "string", "default": "Olavin Team" },
     "blog_type": {
       "type": "enumeration",

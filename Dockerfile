@@ -15,19 +15,6 @@ RUN npm install --prefer-offline --no-audit
 # 复制其余项目文件
 COPY . .
 
-# 【核心修正】：声明并转换构建参数，让 npm run build 能看到它们
-ARG S3_ACCESS_KEY_ID
-ARG S3_ACCESS_SECRET
-ARG S3_ENDPOINT
-ARG S3_BUCKET
-ARG S3_REGION
-
-ENV S3_ACCESS_KEY_ID=$S3_ACCESS_KEY_ID
-ENV S3_ACCESS_SECRET=$S3_ACCESS_SECRET
-ENV S3_ENDPOINT=$S3_ENDPOINT
-ENV S3_BUCKET=$S3_BUCKET
-ENV S3_REGION=$S3_REGION
-
 # 确保在容器内也能找到 node_modules
 ENV NODE_PATH=/opt/app/node_modules
 ENV NODE_ENV=production
