@@ -1,6 +1,6 @@
 {
   "name": "olavin-strapi",
-  "version": "0.1.6",
+  "version": "0.1.8",
   "private": true,
   "description": "A Strapi application",
   "scripts": {
@@ -21,10 +21,7 @@
     "@strapi/strapi": "5.33.1",
     "better-sqlite3": "12.4.1",
     "pg": "^8.16.3",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "react-router-dom": "^6.0.0",
-    "styled-components": "^6.0.0"
+    "strapi-plugin-strapi-algolia": "^2.0.4"
   },
   "devDependencies": {
     "@types/node": "^20",

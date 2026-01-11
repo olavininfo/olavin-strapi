@@ -26,4 +26,10 @@ export default ({ env }) => ({
       },
     },
   },
+
+   // 关键操作：插件已在 package.json 中，但此处显式禁用
+  'strapi-algolia': {
+    enabled: false,
+  },
 });
+
